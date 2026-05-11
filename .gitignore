@@ -1,0 +1,7 @@
+node_modules
+.next
+.vercel
+.veil-notes.json
+.env
+.env.local
+.env*.local
