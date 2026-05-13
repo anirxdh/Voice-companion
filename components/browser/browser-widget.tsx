@@ -18,6 +18,14 @@ function normalizeUrl(raw: string): string {
 }
 
 
+// Sites that set X-Frame-Options: DENY/SAMEORIGIN — they will never load in an iframe
+const IFRAME_BLOCKLIST = /^(www\.)?(google\.(com|co\.[a-z]{2})|facebook\.com|instagram\.com|twitter\.com|x\.com|linkedin\.com|amazon\.(com|co\.[a-z]{2})|netflix\.com|twitch\.tv|discord\.com|notion\.so|figma\.com|slack\.com|microsoft\.com|apple\.com|paypal\.com|chase\.com|bankofamerica\.com)/i;
+
+function isKnownEmbedBlocker(url: string): boolean {
+  try { return IFRAME_BLOCKLIST.test(new URL(url).hostname); }
+  catch { return false; }
+}
+
 function toIframeSrc(url: string): { src: string; isYoutube: boolean } {
   const ytWatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]+)/i);
   if (ytWatch?.[1]) {
@@ -61,7 +69,8 @@ export function BrowserWidget() {
   useEffect(() => {
     if (browserModalUrl) {
       setMinimized(false);
-      setLoadError(false);
+      // Pre-flag known iframe blockers so the fallback shows immediately
+      setLoadError(isKnownEmbedBlocker(browserModalUrl));
       setUrlInput(browserModalUrl);
       setHistory((h) => (h[h.length - 1] === browserModalUrl ? h : [...h, browserModalUrl]));
     }

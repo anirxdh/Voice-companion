@@ -635,8 +635,9 @@ export function MapEnvironmentDock({
   function fmtDuration(sec: number): string {
     const h = Math.floor(sec / 3600);
     const m = Math.round((sec % 3600) / 60);
-    if (h === 0) return `${m} min`;
-    return m === 0 ? `${h} hr` : `${h} hr ${m} min`;
+    if (h === 0) return `${m} ${m === 1 ? "minute" : "minutes"}`;
+    if (m === 0) return `${h} ${h === 1 ? "hour" : "hours"}`;
+    return `${h} ${h === 1 ? "hour" : "hours"} ${m} ${m === 1 ? "minute" : "minutes"}`;
   }
   function fmtDist(m: number): string {
     return m < 1000 ? `${m} m` : `${(m / 1000).toFixed(1)} km`;

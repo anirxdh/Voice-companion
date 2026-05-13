@@ -51,7 +51,12 @@ export function wantsClockDeskOrchestration(text: string): boolean {
 
 export function stickyNoteVoiceAction(text: string): "append" | "list" | "clear" {
   const n = text.trim().toLowerCase();
-  if (/\bclear\b.{0,20}\bnote|\b(scratch|sticky)\s+pad\s+clear\b|\bdelet(e|ed)\s+all\s+(my\s+)?notes\b|\b(blank)\s+(the\s+)?notes\b/u.test(n)) return "clear";
+  if (
+    /\bclear\b.{0,24}\bnotes?\b/u.test(n) ||
+    /\b(delete|erase|wipe|remove|trash)\b.{0,28}\b(my\s+|all\s+|the\s+)?(sticky\s+)?notes?\b/u.test(n) ||
+    /\b(scratch|sticky)\s+pad\s+clear\b/u.test(n) ||
+    /\b(blank|empty)\s+(the\s+)?(sticky\s+)?notes?\b/u.test(n)
+  ) return "clear";
   if (
     /\b(show|read|pull\s+up|open|preview|give\s+me)\b[^\n]{0,40}\b(sticky\s+notes?|scratch\s+(pad|notes))\b|\bwhat\s+did\s+i\s+jot\b/u.test(n) ||
     /\blist\b.{0,20}\b(note|sticky)\b/u.test(n)
@@ -88,7 +93,8 @@ export function extractStickyNoteAppendBody(raw: string): string {
 }
 
 export function wantsMapsOrchestration(text: string): boolean {
-  const n = text.trim().toLowerCase();
+  // Strip trailing punctuation so "Venice Beach, Los Angeles" commas don't break matching
+  const n = text.trim().toLowerCase().replace(/[.,!?]+$/, "");
   if (!n) return false;
 
   const definiteMap =
@@ -98,11 +104,11 @@ export function wantsMapsOrchestration(text: string): boolean {
 
   if (definiteMap) return true;
 
-  
   const nonMapKw = /\b(news|headlines|weather|forecast|video|youtube|music|notes?|alarm|timer|inbox|email|message|wiki|wikipedia|spotify|netflix|github|twitter|reddit|instagram|twitch|discord|photos?|pictures?|images?|update|settings?)\b/u;
   if (nonMapKw.test(n)) return false;
 
-  return /\b(show|find|locate|display|open)\s+(me\s+)?(the\s+|a\s+)?[a-z][a-z'\s-]{2,}$/u.test(n);
+  // Allow commas in place names like "Venice Beach, Los Angeles"
+  return /\b(show|find|locate|display|open)\s+(me\s+)?(the\s+|a\s+)?[a-z][a-z',\s-]{2,}$/u.test(n);
 }
 
 
@@ -116,7 +122,10 @@ export function extractMapsPlaceQuery(raw: string): string {
     .replace(/\b(where\s+(is|'s))\s+/gi, "")
     .replace(/\b(atlas|navigator)\s+/gi, "")
     .replace(/^[,.:\s\-]+/, "")
-    .replace(/[.?]+$/gu, "")
+    .replace(/[,.?!]+$/gu, "")
+    // Normalize mid-query commas: "Venice Beach, Los Angeles" → "Venice Beach Los Angeles"
+    .replace(/,\s*/g, " ")
+    .replace(/\s{2,}/g, " ")
     .trim();
 
   const q = s.slice(0, 180).trim();

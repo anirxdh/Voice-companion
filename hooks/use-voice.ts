@@ -145,13 +145,16 @@ export function useVoice({ onIntent }: UseVoiceOptions) {
       // Phase hold (thinking/orchestrating): block everything
       if (micHoldRef.current) return;
 
-      // Any speech interrupts Vee while she's speaking
-      if (phaseRef.current === "speaking" && (interim.trim() || final.trim())) {
+      // Only confirmed final speech interrupts Vee — avoids self-interruption from speaker echo.
+      // The triggering speech is re-queued as an intent so the user never has to repeat.
+      if (phaseRef.current === "speaking" && final.trim().length > 1) {
         micHoldRef.current = true;
         interruptSpeech();
         lastFinalRef.current = "";
         try { recognitionRef.current?.stop(); } catch { /* ignore */ }
         useSuperNovaStore.getState().setPhase("idle");
+        const interruptedIntent = final.trim();
+        window.setTimeout(() => onIntent(interruptedIntent), 80);
         return;
       }
 

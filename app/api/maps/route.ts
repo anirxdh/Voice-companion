@@ -51,8 +51,9 @@ export async function GET(req: NextRequest) {
   const label = hit.display_name ?? q;
   const lonPad = 0.016;
   const latPad = 0.011;
-  const bbox = `${lon - lonPad}%2C${lat - latPad}%2C${lon + lonPad}%2C${lat + latPad}`;
-  const marker = `${lat}%2C${lon}`;
+  const f = (n: number) => parseFloat(n.toFixed(6));
+  const bbox = `${f(lon - lonPad)},${f(lat - latPad)},${f(lon + lonPad)},${f(lat + latPad)}`;
+  const marker = `${f(lat)},${f(lon)}`;
   const embedUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${marker}`;
   const lead = label.split(",")[0]?.trim() ?? q;
   const speech = `${lead} is centered on the atlas frame — live OpenStreetMap.`;
