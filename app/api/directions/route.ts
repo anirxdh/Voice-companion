@@ -13,7 +13,10 @@ type OsrmResp = { code: string; routes?: Array<{ distance: number; duration: num
 async function geocode(q: string): Promise<{ lat: number; lon: number; label: string } | null> {
   if (!q || q.toLowerCase().includes("current location")) return null;
   const url = `${NOM}?q=${encodeURIComponent(q)}&format=json&limit=1`;
-  const res = await fetch(url, { headers: { Accept: "application/json", "Accept-Language": "en", "User-Agent": UA }, cache: "no-store" });
+  const res = await fetch(url, {
+    headers: { Accept: "application/json", "Accept-Language": "en", "User-Agent": UA },
+    cache: "no-store"
+  });
   if (!res.ok) return null;
   const hits = (await res.json()) as NomHit[];
   const h = hits[0];
@@ -21,7 +24,11 @@ async function geocode(q: string): Promise<{ lat: number; lon: number; label: st
   return { lat: Number(h.lat), lon: Number(h.lon), label: h.display_name?.split(",")[0]?.trim() ?? q };
 }
 
-async function osrmRoute(profile: string, o: { lat: number; lon: number }, d: { lat: number; lon: number }): Promise<{ distanceM: number; durationSec: number } | null> {
+async function osrmRoute(
+  profile: "driving" | "walking" | "cycling",
+  o: { lat: number; lon: number },
+  d: { lat: number; lon: number }
+): Promise<{ distanceM: number; durationSec: number } | null> {
   try {
     const url = `${OSRM}/${profile}/${o.lon.toFixed(6)},${o.lat.toFixed(6)};${d.lon.toFixed(6)},${d.lat.toFixed(6)}?overview=false`;
     const res = await fetch(url, { headers: { "User-Agent": UA }, cache: "no-store" });
@@ -32,6 +39,28 @@ async function osrmRoute(profile: string, o: { lat: number; lon: number }, d: { 
   } catch {
     return null;
   }
+}
+
+function haversineDistanceM(a: { lat: number; lon: number }, b: { lat: number; lon: number }): number {
+  const R = 6371000;
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+  const dLat = toRad(b.lat - a.lat);
+  const dLon = toRad(b.lon - a.lon);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+  const sinLat = Math.sin(dLat / 2);
+  const sinLon = Math.sin(dLon / 2);
+  const h = sinLat * sinLat + Math.cos(lat1) * Math.cos(lat2) * sinLon * sinLon;
+  return Math.round(2 * R * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h)));
+}
+
+function estimateDuration(distanceM: number, mode: TravelMode["mode"]): number {
+  const speedsKph: Record<TravelMode["mode"], number> = {
+    driving: 42,
+    walking: 5,
+    cycling: 16
+  };
+  return Math.max(60, Math.round((distanceM / (speedsKph[mode] * 1000)) * 3600));
 }
 
 function fmtDuration(sec: number): string {
@@ -67,36 +96,24 @@ export async function GET(req: NextRequest) {
   if (origin) {
     const [drive, walk, bike] = await Promise.all([
       osrmRoute("driving", origin, dest),
-      osrmRoute("foot", origin, dest),
-      osrmRoute("bike", origin, dest),
+      osrmRoute("walking", origin, dest),
+      osrmRoute("cycling", origin, dest)
     ]);
 
-    if (drive) routes.push({ mode: "driving", distanceM: drive.distanceM, durationSec: drive.durationSec });
+    const straightDistance = haversineDistanceM(origin, dest);
+    const driveRoute = drive ?? { distanceM: straightDistance, durationSec: estimateDuration(straightDistance, "driving") };
+    const walkRoute = walk ?? { distanceM: straightDistance, durationSec: estimateDuration(straightDistance, "walking") };
+    const bikeRoute = bike ?? { distanceM: straightDistance, durationSec: estimateDuration(straightDistance, "cycling") };
 
-    
-    const distForEst = drive?.distanceM ?? walk?.distanceM ?? bike?.distanceM;
-    if (walk) {
-      routes.push({ mode: "walking", distanceM: walk.distanceM, durationSec: walk.durationSec });
-    } else if (distForEst) {
-      
-      routes.push({ mode: "walking", distanceM: distForEst, durationSec: Math.round(distForEst / 5000 * 3600) });
-    }
-    if (bike) {
-      routes.push({ mode: "cycling", distanceM: bike.distanceM, durationSec: bike.durationSec });
-    } else if (distForEst) {
-      
-      routes.push({ mode: "cycling", distanceM: distForEst, durationSec: Math.round(distForEst / 15000 * 3600) });
-    }
+    routes.push({ mode: "driving", distanceM: driveRoute.distanceM, durationSec: driveRoute.durationSec });
+    routes.push({ mode: "walking", distanceM: walkRoute.distanceM, durationSec: walkRoute.durationSec });
+    routes.push({ mode: "cycling", distanceM: bikeRoute.distanceM, durationSec: bikeRoute.durationSec });
 
-    const driveStr = drive ? `${fmtDuration(drive.durationSec)} by car` : null;
-    const walkStr = walk ? `${fmtDuration(walk.durationSec)} on foot` : null;
-    const distStr = drive ? fmtDist(drive.distanceM) : "";
-    speech = [driveStr, walkStr].filter(Boolean).join(", ") + (distStr ? ` — ${distStr}` : "") + ` from ${origin.label} to ${dest.label}.`;
+    speech = `${fmtDuration(driveRoute.durationSec)} by car, ${fmtDuration(walkRoute.durationSec)} on foot, ${fmtDuration(bikeRoute.durationSec)} by bike — ${fmtDist(driveRoute.distanceM)} from ${origin.label} to ${dest.label}.`;
   } else {
     speech = `${dest.label} located on the map. Add an origin to get travel times.`;
   }
 
-  // Map embed: bounding box covering both points (or just destination)
   const latPad = 0.012;
   const lonPad = 0.016;
   const midLat = origin ? (origin.lat + dest.lat) / 2 : dest.lat;
@@ -114,6 +131,6 @@ export async function GET(req: NextRequest) {
     routes,
     mapEmbedUrl,
     speech,
-    title: `${origin?.label ?? from} → ${dest.label}`,
+    title: `${origin?.label ?? from} → ${dest.label}`
   });
 }
