@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSuperNovaStore } from "@/store/use-supernova-store";
 import { interruptSpeech } from "@/lib/elevenlabs";
+import { unlockAudioAutoplay } from "@/lib/music-player";
 import type { SpeechRecognition, SpeechRecognitionEvent } from "@/types/supernova";
 
 const WAKE_PHRASES = ["hey vee", "vee"];
@@ -18,6 +19,8 @@ export function useVoice({ onIntent }: UseVoiceOptions) {
   const restartingRef = useRef(false);
   const startingRef = useRef(false);
   const listeningRef = useRef(false);
+  const startResolveRef = useRef<((ok: boolean) => void) | null>(null);
+  const startTimerRef = useRef<number | null>(null);
   const phaseRef = useRef<"startup" | "idle" | "listening" | "thinking" | "orchestrating" | "speaking" | "interrupted" | "error">("idle");
   
   const micHoldRef = useRef(false);
@@ -92,6 +95,15 @@ export function useVoice({ onIntent }: UseVoiceOptions) {
       setStatus("listening");
       setError(null);
       setPhase("listening");
+      startingRef.current = false;
+      if (startTimerRef.current != null) {
+        window.clearTimeout(startTimerRef.current);
+        startTimerRef.current = null;
+      }
+      if (startResolveRef.current) {
+        startResolveRef.current(true);
+        startResolveRef.current = null;
+      }
     };
     recognition.onend = () => {
       setListening(false);
@@ -119,18 +131,86 @@ export function useVoice({ onIntent }: UseVoiceOptions) {
     };
     recognition.onerror = (event) => {
       setListening(false);
+      const code = event.error || "speech-recognition-error";
       if (event.error === "aborted" && !keepListeningRef.current) {
         setStatus("idle");
         setError(null);
         setPhase("idle");
+        startingRef.current = false;
+        if (startTimerRef.current != null) {
+          window.clearTimeout(startTimerRef.current);
+          startTimerRef.current = null;
+        }
+        if (startResolveRef.current) {
+          startResolveRef.current(false);
+          startResolveRef.current = null;
+        }
         return;
       }
-      setStatus("error");
-      setError(event.error || "speech-recognition-error");
-      setPhase("error");
-      if (event.error === "not-allowed" || event.error === "service-not-allowed" || event.error === "audio-capture") {
-        keepListeningRef.current = false;
+
+      if (event.error === "no-speech" || event.error === "network") {
+        setStatus("listening");
+        setError(null);
+        setPhase("listening");
+        if (keepListeningRef.current && !micHoldRef.current) {
+          window.setTimeout(() => {
+            if (!keepListeningRef.current || micHoldRef.current || !recognitionRef.current) return;
+            try {
+              recognitionRef.current.start();
+            } catch {
+              /* ignore */
+            }
+          }, 300);
+        }
+        return;
       }
+
+      if (event.error === "aborted") {
+        setStatus("idle");
+        setError(null);
+        setPhase("idle");
+        startingRef.current = false;
+        if (startTimerRef.current != null) {
+          window.clearTimeout(startTimerRef.current);
+          startTimerRef.current = null;
+        }
+        if (startResolveRef.current) {
+          startResolveRef.current(false);
+          startResolveRef.current = null;
+        }
+        return;
+      }
+
+      // Transient unknown error while user wants to keep listening — silently retry
+      if (
+        keepListeningRef.current &&
+        event.error !== "not-allowed" &&
+        event.error !== "service-not-allowed" &&
+        event.error !== "audio-capture"
+      ) {
+        setStatus("listening");
+        setError(null);
+        setPhase("listening");
+        window.setTimeout(() => {
+          if (!keepListeningRef.current || !recognitionRef.current || listeningRef.current) return;
+          try { recognitionRef.current.start(); } catch { /* ignore */ }
+        }, 800);
+        return;
+      }
+
+      setStatus("error");
+      setError(code);
+      setPhase("error");
+      startingRef.current = false;
+      if (startTimerRef.current != null) {
+        window.clearTimeout(startTimerRef.current);
+        startTimerRef.current = null;
+      }
+      if (startResolveRef.current) {
+        startResolveRef.current(false);
+        startResolveRef.current = null;
+      }
+      keepListeningRef.current = false;
     };
     recognition.onresult = (event: SpeechRecognitionEvent) => {
       let interim = "";
@@ -201,8 +281,12 @@ export function useVoice({ onIntent }: UseVoiceOptions) {
 
   const start = useCallback(async () => {
     if (startingRef.current || listeningRef.current) {
-      return true;
+      return listeningRef.current;
     }
+
+    // Unlock HTML5 audio autoplay while inside the user-gesture callback so
+    // music and YouTube previews can play without a second click.
+    unlockAudioAutoplay();
 
     startingRef.current = true;
     setStatus("starting");
@@ -224,28 +308,44 @@ export function useVoice({ onIntent }: UseVoiceOptions) {
     }
 
     try {
-      recognitionRef.current?.start();
-      startingRef.current = false;
-      return true;
-    } catch {
-      try {
-        window.setTimeout(() => {
-          try {
-            recognitionRef.current?.start();
-          } catch {
-            setStatus("error");
+      const started = await new Promise<boolean>((resolve) => {
+        startResolveRef.current = resolve;
+        startTimerRef.current = window.setTimeout(() => {
+          if (startResolveRef.current) {
+            startResolveRef.current(false);
+            startResolveRef.current = null;
           }
-        }, 250);
-        startingRef.current = false;
-        return true;
-      } catch (startError) {
-        keepListeningRef.current = false;
-        startingRef.current = false;
-        setStatus("error");
-        setError(startError instanceof Error ? startError.message : "Unable to start speech recognition");
-        setPhase("error");
-        return false;
-      }
+          startTimerRef.current = null;
+          startingRef.current = false;
+          setStatus("error");
+          setError("Speech recognition did not start");
+          setPhase("error");
+        }, 2500);
+
+        try {
+          recognitionRef.current?.start();
+        } catch (error) {
+          if (startTimerRef.current != null) {
+            window.clearTimeout(startTimerRef.current);
+            startTimerRef.current = null;
+          }
+          startResolveRef.current = null;
+          startingRef.current = false;
+          keepListeningRef.current = false;
+          setStatus("error");
+          setError(error instanceof Error ? error.message : "Unable to start speech recognition");
+          setPhase("error");
+          resolve(false);
+        }
+      });
+      return started;
+    } catch {
+      keepListeningRef.current = false;
+      startingRef.current = false;
+      setStatus("error");
+      setError("Unable to start speech recognition");
+      setPhase("error");
+      return false;
     }
   }, []);
 
@@ -255,6 +355,7 @@ export function useVoice({ onIntent }: UseVoiceOptions) {
     setListening(false);
     listeningRef.current = false;
     setStatus("idle");
+    setError(null);
     recognitionRef.current?.stop();
     setPhase("idle");
   }, []);

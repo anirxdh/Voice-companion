@@ -6,7 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 
 import { ExternalLink, Mail, Play, Pause, X, Volume2 } from "lucide-react";
 
-import { type CSSProperties, useCallback, useEffect, useMemo, useState } from "react";
+import { type CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
 
@@ -316,7 +316,7 @@ function CompactCoverChip({
 
             )}
 
-            {preview.previewUrl ? (
+            {preview.previewUrl || preview.deezerUrl || preview.audiusUrl ? (
 
               <button
 
@@ -931,6 +931,8 @@ function AgentMessageDock({
 function WallPreviewDockInner({ preview, sceneIsColony, embedUrl, placement, compactCover, hasVideoEmbed, closePreview }: WallDockInnerProps) {
 
   const [playing, setPlaying] = useState(false);
+  const phase = useSuperNovaStore((s) => s.phase);
+  const prevPhaseRef = useRef(phase);
 
 
 
@@ -956,11 +958,12 @@ function WallPreviewDockInner({ preview, sceneIsColony, embedUrl, placement, com
 
   const playAudio = useCallback(async () => {
 
-    if (!preview.previewUrl) return;
+    const audioUrl = preview.previewUrl?.trim() || preview.deezerUrl?.trim() || preview.audiusUrl?.trim();
+    if (!audioUrl) return;
 
     try {
 
-      const audio = await playMusicPreview(preview.previewUrl);
+      const audio = await playMusicPreview(audioUrl);
 
       setPlaying(true);
 
@@ -974,13 +977,13 @@ function WallPreviewDockInner({ preview, sceneIsColony, embedUrl, placement, com
 
     }
 
-  }, [preview.previewUrl]);
+  }, [preview.previewUrl, preview.deezerUrl, preview.audiusUrl]);
 
 
 
   useEffect(() => {
 
-    const url = preview.previewUrl?.trim();
+    const url = preview.previewUrl?.trim() || preview.deezerUrl?.trim() || preview.audiusUrl?.trim();
 
     if (!url) return;
 
@@ -1012,7 +1015,28 @@ function WallPreviewDockInner({ preview, sceneIsColony, embedUrl, placement, com
 
     };
 
-  }, [preview.previewUrl]);
+  }, [preview.previewUrl, preview.deezerUrl, preview.audiusUrl]);
+
+
+
+  // Post-speech retry: when TTS finishes (speaking → idle) the ElevenLabs
+  // AudioContext is warm, so audio.play() succeeds even if browser autoplay
+  // is normally blocked. Only fires if not already playing.
+  useEffect(() => {
+    const prev = prevPhaseRef.current;
+    prevPhaseRef.current = phase;
+    if (prev !== "speaking" || phase !== "idle") return;
+    if (playing) return;
+    const url = preview.previewUrl?.trim() || preview.deezerUrl?.trim() || preview.audiusUrl?.trim();
+    if (!url) return;
+    void reuseOrPlayPreview(url)
+      .then((audio) => {
+        audio.onended = () => setPlaying(false);
+        audio.onerror = () => setPlaying(false);
+        setPlaying(true);
+      })
+      .catch(() => { /* still blocked — user can tap play */ });
+  }, [phase, playing, preview.previewUrl, preview.deezerUrl, preview.audiusUrl]);
 
 
 
@@ -1186,7 +1210,7 @@ function WallPreviewDockInner({ preview, sceneIsColony, embedUrl, placement, com
 
           <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
 
-            {preview.previewUrl && (
+            {(preview.previewUrl || preview.deezerUrl || preview.audiusUrl) && (
 
               <Button variant="veil" size="sm" className="h-8 w-fit text-xs" onClick={playing ? pauseAudio : () => void playAudio()}>
 
@@ -1296,7 +1320,7 @@ function buildDockLayout(
 
     preview.title,
 
-    preview.previewUrl ?? "",
+    preview.previewUrl ?? preview.deezerUrl ?? preview.audiusUrl ?? "",
 
     preview.videoUrl ?? "",
 

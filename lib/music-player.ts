@@ -45,6 +45,16 @@ type PlaybackGraph = {
 
 let playbackGraph: PlaybackGraph | null = null;
 
+let _unlockCtx: AudioContext | null = null;
+
+export function unlockAudioAutoplay(): void {
+  if (typeof window === "undefined") return;
+  try {
+    if (!_unlockCtx) _unlockCtx = new AudioContext();
+    if (_unlockCtx.state !== "running") void _unlockCtx.resume();
+  } catch { /* ignore */ }
+}
+
 function teardownPlaybackGraph() {
   if (!playbackGraph) return;
   try {
