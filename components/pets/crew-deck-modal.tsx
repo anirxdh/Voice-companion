@@ -15,7 +15,7 @@ import {
   type OnePieceCrewEntry
 } from "@/lib/one-piece-collection";
 import { SPRITE_IMPORT_DOCS_URL } from "@/lib/sprite-docs-url";
-import { useVeilStore } from "@/store/use-veil-store";
+import { useSuperNovaStore } from "@/store/use-supernova-store";
 
 function PortraitFrame({ slug }: { slug: string }) {
   const src = `/assets/pets/${slug}/spritesheet.webp`;
@@ -113,10 +113,10 @@ function CrewTileCard({
 }
 
 export function CrewDeckModal() {
-  const open = useVeilStore((s) => s.crewDeckOpen);
-  const closeCrewDeck = useVeilStore((s) => s.closeCrewDeck);
-  const selectedId = useVeilStore((s) => s.selectedCrewEntryId);
-  const setSelectedCrewEntryId = useVeilStore((s) => s.setSelectedCrewEntryId);
+  const open = useSuperNovaStore((s) => s.crewDeckOpen);
+  const closeCrewDeck = useSuperNovaStore((s) => s.closeCrewDeck);
+  const selectedId = useSuperNovaStore((s) => s.selectedCrewEntryId);
+  const setSelectedCrewEntryId = useSuperNovaStore((s) => s.setSelectedCrewEntryId);
 
   const selected =
     ONE_PIECE_UNIQUE_CREW.find((item) => item.id === selectedId) ??

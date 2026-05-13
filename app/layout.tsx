@@ -13,12 +13,16 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Ambient",
+  title: "Super Nova",
   description: "Intent is the new interface.",
-  applicationName: "Ambient",
+  applicationName: "Super Nova",
+  icons: {
+    icon: "/brand/super-nova-logo.png",
+    apple: "/brand/super-nova-logo.png"
+  },
   appleWebApp: {
     capable: true,
-    title: "Ambient",
+    title: "Super Nova",
     statusBarStyle: "black-translucent"
   }
 };

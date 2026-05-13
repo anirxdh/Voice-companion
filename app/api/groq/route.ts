@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { createOrchestrationStream } from "@/lib/groq";
-import type { MCPTool } from "@/types/veil";
+import type { MCPTool } from "@/types/supernova";
 
 export const runtime = "nodejs";
 

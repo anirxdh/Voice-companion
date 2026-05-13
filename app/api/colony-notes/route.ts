@@ -5,7 +5,7 @@ import { uid } from "@/lib/utils";
 
 export const runtime = "nodejs";
 
-const FILE = join(process.cwd(), ".veil-notes.json");
+const FILE = join(process.cwd(), ".supernova-notes.json");
 
 type Store = { notes: Array<{ id: string; text: string; createdAt: string }> };
 

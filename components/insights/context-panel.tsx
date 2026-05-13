@@ -5,10 +5,10 @@ import { Brain, History, Sparkles } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { useVeilStore } from "@/store/use-veil-store";
+import { useSuperNovaStore } from "@/store/use-supernova-store";
 
 export function ContextPanel() {
-  const memoryCards = useVeilStore((state) => state.memoryCards);
+  const memoryCards = useSuperNovaStore((state) => state.memoryCards);
 
   return (
     <aside className="pointer-events-auto absolute left-5 top-24 hidden w-[310px] space-y-3 xl:block">

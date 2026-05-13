@@ -1,5 +1,5 @@
-import { VeilApp } from "@/components/veil-app";
+import { SuperNovaApp } from "@/components/supernova-app";
 
 export default function Home() {
-  return <VeilApp />;
+  return <SuperNovaApp />;
 }

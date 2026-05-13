@@ -1,11 +1,6 @@
 import { ONE_PIECE_SLUG_BY_HOTSPOT, orbOnePieceSlug } from "@/lib/one-piece-collection";
 
-/**
- * Pet sprites live in `public/assets/pets/<slug>/spritesheet.webp` (Codex-compatible atlas sheet).
- *
- * Default colony cast: nine **distinct** mascot folders under `public/assets/pets/` (office theme).
- * Set `NEXT_PUBLIC_COLONY_PET_THEME=onepiece` for nine tiles — each hotspot maps to one crew slot (`lib/one-piece-collection.ts` → `ONE_PIECE_UNIQUE_CREW`).
- */
+
 export const MAIN_ORB_PET_SLUG = "colony-agent";
 
 export type ColonyNpc = {
@@ -31,7 +26,7 @@ const OFFICE_MAP = {
   notes: "qgirl",
   archive: "panam",
   downloads: "boba",
-  /** Walkway sprite if we ever anchor an ambient hotspot to it. */
+  
   ambient: "maddie"
 } as const;
 
@@ -44,12 +39,12 @@ function roomSlugEntries(): typeof OFFICE_MAP {
 
 const R = roomSlugEntries();
 
-/** Orb mirrors the hub hotspot’s crew sprite when `onepiece` theme is enabled. */
+
 export function mainOrbPetSlug(): string {
   return COLONY_PET_THEME === "onepiece" ? orbOnePieceSlug() : MAIN_ORB_PET_SLUG;
 }
 
-/** Nine colony room hotspots (3×3 grid). */
+
 export const ROOM_NPC_LIST: ColonyNpc[] = [
   { id: "email", room: "email", slug: R.email, left: "22%", top: "25%", delay: 0, scale: 1 },
   { id: "library", room: "library", slug: R.library, left: "50%", top: "24%", delay: 0.2, scale: 1.03 },

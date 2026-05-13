@@ -2,11 +2,11 @@
 
 import { motion } from "framer-motion";
 import { Mic, Pause, Radio, Sparkles } from "lucide-react";
-import { useVeilStore } from "@/store/use-veil-store";
+import { useSuperNovaStore } from "@/store/use-supernova-store";
 import { Waveform } from "@/components/voice/waveform";
 
 export function CentralOrb() {
-  const phase = useVeilStore((state) => state.phase);
+  const phase = useSuperNovaStore((state) => state.phase);
 
   const Icon = phase === "listening" ? Mic : phase === "speaking" ? Radio : phase === "interrupted" ? Pause : Sparkles;
 

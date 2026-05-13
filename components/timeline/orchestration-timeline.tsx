@@ -3,12 +3,12 @@
 import { motion } from "framer-motion";
 import { CircleDot, Terminal } from "lucide-react";
 import { formatClock } from "@/lib/utils";
-import { useVeilStore } from "@/store/use-veil-store";
+import { useSuperNovaStore } from "@/store/use-supernova-store";
 
 export function OrchestrationTimeline() {
-  const timeline = useVeilStore((state) => state.timeline);
-  const thoughtStream = useVeilStore((state) => state.thoughtStream);
-  const activeTools = useVeilStore((state) => state.activeTools);
+  const timeline = useSuperNovaStore((state) => state.timeline);
+  const thoughtStream = useSuperNovaStore((state) => state.thoughtStream);
+  const activeTools = useSuperNovaStore((state) => state.activeTools);
 
   const thoughts = thoughtStream
     .split(/(?<=[.!?])\s+/)

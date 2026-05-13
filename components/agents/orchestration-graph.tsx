@@ -1,11 +1,11 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useVeilStore } from "@/store/use-veil-store";
+import { useSuperNovaStore } from "@/store/use-supernova-store";
 
 export function OrchestrationGraph() {
-  const nodes = useVeilStore((state) => state.nodes);
-  const edges = useVeilStore((state) => state.edges);
+  const nodes = useSuperNovaStore((state) => state.nodes);
+  const edges = useSuperNovaStore((state) => state.edges);
 
   return (
     <div className="pointer-events-none absolute inset-x-[18%] bottom-[290px] top-[16%] hidden md:block">

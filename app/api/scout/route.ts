@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
-const UA = "VEIL-Colony/1.0 (assistant; wikipedia scout)";
+const UA = "Super Nova/1.0 (assistant; wikipedia scout)";
 
 export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams.get("query")?.trim();
@@ -62,3 +62,4 @@ export async function GET(req: NextRequest) {
     }
   });
 }
+

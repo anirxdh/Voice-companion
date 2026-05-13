@@ -1,20 +1,6 @@
-/**
- * Synthetic MCP URLs — VEIL builtins (nine-tile colony “base lane” vs remote MCP servers).
- *
- * Room alignment (anchors for docks / intents):
- * - email · message MCP
- * - library · wiki_scout + atlas (maps_place docks here)
- * - browser · weather + YouTube MCP
- * - voice · music MCP
- * - hub · orchestration orb / scout summaries
- * - clock · alarms & timers
- * - notes · sticky_note (.veil-notes.json)
- * - archive · orbit_apod (NASA APOD desk)
- * - browser strip · browse_page (Firecrawl scrape when FIRECRAWL_API_KEY else plain fetch)
- * - downloads · headlines (Hacker News)
- */
 
-import type { MCPTool } from "@/types/veil";
+
+import type { MCPTool } from "@/types/supernova";
 
 export const VEIL_BUILTIN_MCP_URL = "https://veil.builtin/mcp";
 
@@ -86,7 +72,7 @@ export const VEIL_BUILTIN_TOOLS: MCPTool[] = [
     serverUrl: VEIL_BUILTIN_MCP_URL,
     name: "sticky_note",
     description:
-      "Colony sticky notes / scratch pad (.veil-notes.json). Trigger: remember/jot/note/sticky/show my notes/clear notes. Args: action (append|list|clear|delete), text (append), id (delete one).",
+      "Colony sticky notes / scratch pad (.supernova-notes.json). Trigger: remember/jot/note/sticky/show my notes/clear notes. Args: action (append|list|clear|delete), text (append), id (delete one).",
     inputSchema: {
       type: "object",
       properties: {

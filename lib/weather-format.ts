@@ -1,6 +1,6 @@
-/** Build spoken line + summary text from `/api/weather` JSON shape. */
 
-import type { WeatherPreviewPayload } from "@/types/veil";
+
+import type { WeatherPreviewPayload } from "@/types/supernova";
 
 export type WeatherDto = {
   city?: string;

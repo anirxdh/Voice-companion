@@ -1,19 +1,14 @@
-/**
- * Single source for One Piece–inspired **unique crew sprites**: each colony hotspot gets one dedicated sprite.
- * Spritesheets: `public/assets/pets/<slug>/spritesheet.webp`
- *
- * Optional HTTPS gallery URL for installs: `NEXT_PUBLIC_ONE_PIECE_GALLERY_URL` or legacy `NEXT_PUBLIC_ONE_PIECE_COLLECTION_URL`.
- */
+
 
 const rawGallery =
   process.env.NEXT_PUBLIC_ONE_PIECE_GALLERY_URL?.trim() ||
   process.env.NEXT_PUBLIC_ONE_PIECE_COLLECTION_URL?.trim();
 
-/** Outbound gallery link; empty disables external buttons until env is set. */
-export const ONE_PIECE_GALLERY_PAGE_URL =
-  rawGallery && /^https?:\/\//iu.test(rawGallery) ? rawGallery : "";
 
-/** Matches colony `room` ids on hotspots + walkway ambient strip. */
+export const ONE_PIECE_GALLERY_PAGE_URL =
+  rawGallery && /^https?:\/\//i.test(rawGallery) ? rawGallery : "";
+
+
 export type ColonyHotspotRoom =
   | "email"
   | "library"
@@ -28,21 +23,19 @@ export type ColonyHotspotRoom =
 
 export type OnePieceCrewEntry = {
   id: string;
-  /** Short label in UI (distinct where two sprites depict the same crewmate). */
+  
   displayName: string;
-  /** Badge on cards: humanoid vs other. */
+  
   kind: "Figure" | "Creature";
-  /** One colony hotspot — uniqueness guarantee for the colony floor. */
+  
   colonyHotspot: ColonyHotspotRoom;
   blurb: string;
   moods: string[];
-  /** Folder slug under `public/assets/pets/` */
+  
   slug: string;
 };
 
-/**
- * Exactly ten entries — mirrors the nine VEIL hotspots plus the ambience walkway sprite.
- */
+
 export const ONE_PIECE_UNIQUE_CREW: OnePieceCrewEntry[] = [
   {
     id: "luffy-grin",

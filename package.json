@@ -1,5 +1,5 @@
 {
-  "name": "veil",
+  "name": "super-nova",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -14,6 +14,7 @@
     "@radix-ui/react-slot": "^1.1.1",
     "@react-three/drei": "^10.0.0",
     "@react-three/fiber": "^9.0.0-rc.1",
+    "agent-browser": "^0.27.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "framer-motion": "^12.4.7",

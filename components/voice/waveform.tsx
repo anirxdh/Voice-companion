@@ -1,11 +1,11 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useVeilStore } from "@/store/use-veil-store";
+import { useSuperNovaStore } from "@/store/use-supernova-store";
 
 export function Waveform({ compact = false }: { compact?: boolean }) {
-  const audioLevel = useVeilStore((state) => state.audioLevel);
-  const phase = useVeilStore((state) => state.phase);
+  const audioLevel = useSuperNovaStore((state) => state.audioLevel);
+  const phase = useSuperNovaStore((state) => state.phase);
   const bars = compact ? 14 : 48;
 
   return (

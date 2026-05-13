@@ -19,6 +19,7 @@ export async function analyzeVisualContext(input: VisualInput): Promise<Percepti
     labels: [label, "multimodal context", "future visual perception"],
     screenRegions: [],
     confidence: input.dataUrl ? 0.62 : 0.34,
-    summary: `Captured ${label} for VEIL orchestration context.`
-  };
+    summary: `Captured ${label} for Super Nova orchestration context.`
+};
 }
+

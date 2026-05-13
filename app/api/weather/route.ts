@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
 async function geocodeCity(query: string): Promise<{ lat: number; lon: number; city: string } | null> {
   const q = encodeURIComponent(query.slice(0, 96));
   const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${q}&count=4&language=en&format=json`, {
-    headers: { "user-agent": "VEIL/1.0" },
+    headers: { "user-agent": "Super Nova/1.0" },
     signal: AbortSignal.timeout(9000)
   });
   if (!res.ok) return null;
@@ -90,7 +90,7 @@ async function fetchWeather(cityHint?: string): Promise<WeatherPayload> {
 
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
     try {
-      const ipRes = await fetch("https://ipapi.co/json/", { headers: { "user-agent": "VEIL/1.0" } });
+      const ipRes = await fetch("https://ipapi.co/json/", { headers: { "user-agent": "Super Nova/1.0" } });
       if (ipRes.ok) {
         const ip = await ipRes.json();
         lat = Number(ip.latitude);
@@ -178,3 +178,4 @@ function weatherLabel(code: number, isDay = 1) {
   };
   return map[code] || "Unknown";
 }
+

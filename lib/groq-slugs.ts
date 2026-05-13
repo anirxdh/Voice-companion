@@ -1,6 +1,6 @@
-import type { MCPTool } from "@/types/veil";
+import type { MCPTool } from "@/types/supernova";
 
-/** Sanitize bare tool ids (legacy fallback in MCP resolution — prefer {@link groqSlugForMcpTool}). */
+
 export function groqSlugForToolName(name: string) {
   return name.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 96);
 }
@@ -14,10 +14,7 @@ function endpointSlugPrefix(serverUrl: string): string {
   }
 }
 
-/**
- * Stable, unique slug per MCP tool across servers — YouTube vs music MCP both expose `play`, etc.
- * Format: `{hostSlug}__{toolName}` (mirrored in MCP resolution).
- */
+
 export function groqSlugForMcpTool(tool: MCPTool): string {
   const prefixed = `${endpointSlugPrefix(tool.serverUrl)}__${tool.name}`.replace(/[^a-zA-Z0-9_-]/g, "_");
   return prefixed.slice(0, 112);

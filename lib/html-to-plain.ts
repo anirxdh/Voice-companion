@@ -1,4 +1,4 @@
-/** Very small HTML → readable text for fallback browse (no Firecrawl). */
+
 export function htmlToPlainDocument(html: string, maxChars = 12000): string {
   const noScripts = html
     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/giu, " ")

@@ -7,7 +7,7 @@ export type NewsHeadlineDto = {
 
 const MAX_VOICE_TITLE = 116;
 
-/** Clean + cap length so TTS does not choke on giant HN titles. */
+
 function titleForSpeech(raw: string, maxLen = MAX_VOICE_TITLE): string {
   const t = raw.replace(/\s+/g, " ").trim();
   if (!t) return "";

@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { CloudSun, X } from "lucide-react";
 import { ROOM_NPC_LIST } from "@/components/pets/colony-pet-registry";
 import { Button } from "@/components/ui/button";
-import { useVeilStore } from "@/store/use-veil-store";
+import { useSuperNovaStore } from "@/store/use-supernova-store";
 
 function anchorPctForRoom(room: string): { left: string; top: string } | null {
   const hit = ROOM_NPC_LIST.find((n) => n.room === room && n.id !== "ambiance-strip");
@@ -13,8 +13,8 @@ function anchorPctForRoom(room: string): { left: string; top: string } | null {
 }
 
 export function ColonyRoomPins({ visible }: { visible: boolean }) {
-  const pins = useVeilStore((state) => state.weatherPins);
-  const removeWeatherPin = useVeilStore((state) => state.removeWeatherPin);
+  const pins = useSuperNovaStore((state) => state.weatherPins);
+  const removeWeatherPin = useSuperNovaStore((state) => state.removeWeatherPin);
 
   if (!visible) return null;
 

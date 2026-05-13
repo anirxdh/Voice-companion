@@ -1,4 +1,4 @@
-import type { ActiveTool, MCPTool, OrchestrationUpdate } from "@/types/veil";
+import type { ActiveTool, MCPTool, OrchestrationUpdate } from "@/types/supernova";
 import { uid } from "@/lib/utils";
 import { wantsBrowseOrchestration } from "@/lib/environment-intents";
 import {
@@ -86,7 +86,7 @@ function extractMessagingOutputText(output: unknown): string {
     try {
       parts.push(JSON.stringify(o.structuredContent));
     } catch {
-      /* ignore */
+      
     }
   }
   const joined = parts.join(" ").trim();
@@ -322,7 +322,7 @@ async function runVeilBuiltinToolOutput(toolName: string, input: unknown): Promi
     return {
       content: [{ type: "text", text }],
       structuredContent: {
-        title: "Sticky notes · colony pad",
+        title: "Sticky notes · Super Nova pad",
         stickyNotes: Array.isArray(json.notes) ? json.notes : [],
         summaryLines: json.summaryLines
       }
@@ -756,13 +756,20 @@ async function runMusicCommand(intent: string, emit: (update: OrchestrationUpdat
     content?: Array<{ type?: string; text?: string }>;
   } | undefined;
   const text = output?.content?.map((item) => item.text).filter(Boolean).join(" ").trim() ?? "";
-  const noResults = /no results found/i.test(text);
+  const noResults = /no results found/i.test(text) || /not found/i.test(text) || /no track/i.test(text);
 
-  if (noResults) {
+  if (noResults && toolName === "play") {
+    const rawQuery = buildMusicInput(intent, "play");
+    const q = rawQuery && typeof rawQuery === "object" && "query" in rawQuery ? String(rawQuery.query) : extractMusicQuery(intent);
     emit({
       type: "complete",
-      response: "I couldn’t find a matching track. Try the song title plus the artist."
+      response: `Couldn’t find "${q}" on the music server. Say "play ${q} on YouTube" to search YouTube instead.`
     });
+    return;
+  }
+
+  if (noResults) {
+    emit({ type: "complete", response: "Couldn’t find a matching track." });
     return;
   }
 
@@ -1129,7 +1136,7 @@ function friendlyPostToolSpeech(intent: string): string {
     return "Top three snapshots were read aloud; the ribbon below still holds the fuller stack.";
   }
   if (/\b(note|sticky|scratch|remember|jot)\b/u.test(n)) {
-    return "Notes live on the lower-left colony pad.";
+    return "Notes live on the lower-left Super Nova pad.";
   }
   if (/\b(map|maps|where is|located|coordinates|navigation|street)\b/u.test(n)) {
     return "The atlas iframe is hovering over the stack grid near the stacks tile.";
@@ -1185,7 +1192,7 @@ export async function orchestrateIntent(intent: string, emit: (update: Orchestra
           kind: "system",
           title: "Remote MCP unreachable",
           detail:
-            "No live /mcp tools yet—VEIL still exposes built-in headlines; fix NEXT_PUBLIC_MCP_ENDPOINT_* and reload for music, YouTube, and relay.",
+            "No live /mcp tools yet—Super Nova still exposes built-in headlines; fix NEXT_PUBLIC_MCP_ENDPOINT_* and reload for music, YouTube, and relay.",
           timestamp: Date.now()
         }
       });

@@ -1,4 +1,4 @@
-import type { AgentExecutionContext, AgentExecutionResult, MCPTool } from "@/types/veil";
+import type { AgentExecutionContext, AgentExecutionResult, MCPTool } from "@/types/supernova";
 import { executeMCPTool } from "@/lib/mcp-client";
 import { uid } from "@/lib/utils";
 

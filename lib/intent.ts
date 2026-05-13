@@ -28,7 +28,7 @@ const GREETING_PATTERNS = [
   /\badvice\b/i
 ];
 
-/** Wall-clock questions — handled locally (weather API timezone), not via MCP or open-ended chat. */
+
 export function isLocalTimeIntent(input: string) {
   const n = input.trim().toLowerCase();
   if (!n) return false;
@@ -42,7 +42,7 @@ export function isLocalTimeIntent(input: string) {
   );
 }
 
-/** Inbox / agent relay — voice must hit MCP orchestration, not conversational “chat” mode (which disables tools). */
+
 export function isRelayMessagingIntent(input: string): boolean {
   const n = input.trim().toLowerCase();
   if (!n) return false;
@@ -90,7 +90,7 @@ export function isConversationalIntent(input: string) {
   if (wantsBrowseOrchestration(input.trim())) return false;
   if (wantsScoutOrchestration(normalized)) return false;
   if (wantsOrbitOrchestration(normalized)) return false;
-  /** Action-shaped utterances need MCP orchestration; conversational Groq mode disables tools. */
+  
   if (ACTION_PATTERNS.some((pattern) => pattern.test(normalized))) return false;
 
   return (
@@ -126,13 +126,13 @@ export function inferTaskRoom(input: string) {
   if (/(play|song|music|track|album|artist|pause|resume|next|previous|queue|volume|mute|unmute|spotify)/i.test(normalized)) return "voice";
   if (/(time|clock|alarm|reminder|timer|schedule)/i.test(normalized)) return "clock";
   if (/(weather|temperature|forecast|rain|snow|cloud)/i.test(normalized)) return "browser";
-  if (/(email|mail|inbox)/i.test(normalized)) return "email";
-  if (/(download|desktop|file|scan)/i.test(normalized)) return "downloads";
-  if (/\b(note|sticky|scratch|jot)\b/i.test(normalized)) return "notes";
-  if (/\bwiki(pedia)?\b|^lookup\b|\bscout\b|\btell\s+me\s+about\b|\bwho\s+is\b/i.test(normalized)) return "library";
-  if (/\b(apod|orbit\s+deck|nasa\b.*picture|galaxy|nebula)\b/i.test(normalized)) return "archive";
+  if (/(email|mail|inbox|relay|message|wire)/i.test(normalized)) return "email";
+  if (/(news|headline|feed|hacker\s*news|breaking)/i.test(normalized)) return "downloads";
+  if (/\b(note|sticky|scratch|jot|ink|canvas)\b/i.test(normalized)) return "notes";
+  if (/\bwiki(pedia)?\b|^lookup\b|\bscout\b|\btell\s+me\s+about\b|\bwho\s+is\b|\blens\b/i.test(normalized)) return "library";
+  if (/\b(apod|orbit\s+deck|nasa\b.*picture|galaxy|nebula|cosmos|space)\b/i.test(normalized)) return "archive";
   if (/\b(map\b|atlas\b|coordinates)\b/i.test(normalized)) return "library";
-  if (/(browser|open|search|google|website|site|summarize|news|headline)/i.test(normalized)) return "browser";
+  if (/(browser|open|search|google|website|site|summarize|signal)/i.test(normalized)) return "browser";
   if (/(archive|history|old|saved)/i.test(normalized)) return "archive";
   return null;
 }
@@ -153,7 +153,7 @@ export function extractMusicQuery(input: string) {
 
   if (!stripped) return "";
 
-  // If the user says "play a song by Taylor Swift", preserve the artist as a useful search query.
+  
   const artistMatch = normalized.match(/\b(?:song|music|track)\s+by\s+(.+)$/i);
   if (artistMatch?.[1]) {
     return artistMatch[1].replace(/[?.!]+$/g, "").trim();
@@ -162,7 +162,7 @@ export function extractMusicQuery(input: string) {
   return stripped;
 }
 
-/** Strip VO phrasing → YouTube MCP `query` (search / play URL / topic). */
+
 export function extractYoutubeQuery(input: string): string {
   const normalized = input.trim();
   let s = normalized
@@ -193,17 +193,13 @@ export function extractYoutubeQuery(input: string): string {
   return s.trim();
 }
 
-/**
- * Drops assistant / music-MCP error text that sometimes gets pasted into voice transcripts
- * and mistaken for a YouTube search query. Does not strip normal user queries like
- * songs titled "Couldn't Care Less".
- */
+
 export function sanitizeYoutubeMcpQuery(raw: string): string {
   const collapsed = raw.trim().replace(/\s+/gu, " ");
   if (!collapsed) return "";
-  // Direct watch links should pass through untouched.
-  if (/^https?:\/\//iu.test(collapsed)) return collapsed.length > 2000 ? "" : collapsed;
-  // Very long pasted monologues are never useful as a single MCP query.
+  
+  if (/^https?:\/\//i.test(collapsed)) return collapsed;
+  
   if (collapsed.length > 220) return "";
 
   const low = collapsed.toLowerCase();

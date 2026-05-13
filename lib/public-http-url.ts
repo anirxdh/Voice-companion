@@ -1,6 +1,4 @@
-/**
- * Allow only public http(s) URLs for server-side browse/fetch helpers (anti-SSRF).
- */
+
 export function assertPublicHttpUrl(input: string): URL {
   let u: URL;
   try {
@@ -18,7 +16,7 @@ export function assertPublicHttpUrl(input: string): URL {
   }
 
   let h = u.hostname.toLowerCase();
-  /* IPv6 hostnames expose colons — block here to avoid SSRF fuzzing loopback literals. */
+  
   if (h.includes(":")) {
     throw new Error("IPv6 literals are not allowed");
   }
@@ -33,7 +31,7 @@ export function assertPublicHttpUrl(input: string): URL {
     "[::1]"
   ]);
   if (blockedHosts.has(h) || h.endsWith(".localhost") || h.endsWith(".internal")) {
-    throw new Error("That host cannot be fetched from VEIL");
+    throw new Error("That host cannot be fetched from Super Nova");
   }
 
   const v4 = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/u.exec(h);
@@ -51,3 +49,4 @@ export function assertPublicHttpUrl(input: string): URL {
 
   return u;
 }
+

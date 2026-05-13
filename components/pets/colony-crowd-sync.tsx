@@ -2,28 +2,28 @@
 
 import { useEffect } from "react";
 import { subscribeMusicPlaybackState, isMusicGloballyPlaying } from "@/lib/music-player";
-import { useVeilStore } from "@/store/use-veil-store";
+import { useSuperNovaStore } from "@/store/use-supernova-store";
 
-function resolveCrowdMode(ambientPreview: ReturnType<typeof useVeilStore.getState>["ambientPreview"]): "idle" | "pulse" | "theatre" {
+function resolveCrowdMode(ambientPreview: ReturnType<typeof useSuperNovaStore.getState>["ambientPreview"]): "idle" | "pulse" | "theatre" {
   if (ambientPreview?.kind === "video" || ambientPreview?.kind === "youtube") return "theatre";
   if (ambientPreview?.kind === "music" && isMusicGloballyPlaying()) return "pulse";
   if (isMusicGloballyPlaying()) return "pulse";
   return "idle";
 }
 
-/** Keeps MCP / media UI untouched; only updates ambient colony crowd reactively. */
-export function ColonyCrowdSync() {
-  const setCrowd = useVeilStore((s) => s.setColonyCrowdMode);
-  const ambientPreview = useVeilStore((s) => s.ambientPreview);
 
-  /** Preview open/close commits immediately — no shimmer when docks change. */
+export function ColonyCrowdSync() {
+  const setCrowd = useSuperNovaStore((s) => s.setColonyCrowdMode);
+  const ambientPreview = useSuperNovaStore((s) => s.ambientPreview);
+
+  
   useEffect(() => {
     setCrowd(resolveCrowdMode(ambientPreview));
   }, [ambientPreview, setCrowd]);
 
-  /** Music telemetry is noisy; brief hysteresis stops idle ↔ pulse row strobing on pets. */
+  
   useEffect(() => {
-    /** Browser returns `number`; avoid `ReturnType` Node `Timeout` mismatch. */
+    
     let idleHang: number | undefined;
 
     const clearHang = () => {
@@ -34,12 +34,12 @@ export function ColonyCrowdSync() {
     };
 
     const unsub = subscribeMusicPlaybackState(() => {
-      const snap = resolveCrowdMode(useVeilStore.getState().ambientPreview);
+      const snap = resolveCrowdMode(useSuperNovaStore.getState().ambientPreview);
       clearHang();
 
       if (snap === "idle") {
         idleHang = window.setTimeout(() => {
-          const again = resolveCrowdMode(useVeilStore.getState().ambientPreview);
+          const again = resolveCrowdMode(useSuperNovaStore.getState().ambientPreview);
           if (again === "idle") setCrowd("idle");
         }, 720);
       } else {

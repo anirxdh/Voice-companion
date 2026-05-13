@@ -1,4 +1,4 @@
-import type { MediaPreview } from "@/types/veil";
+import type { MediaPreview } from "@/types/supernova";
 import { messageMcpEndpoint, musicMcpEndpoint, urlsMatch, youtubeVideoMcpEndpoint } from "@/lib/mcp-endpoints";
 import { isVeilBuiltinServerUrl } from "@/lib/mcp-builtin";
 
@@ -12,6 +12,9 @@ type MCPToolOutput = {
     previewUrl?: string;
     videoUrl?: string;
     embedUrl?: string;
+    videoId?: string;   
+    thumbnail?: string; 
+    author?: string;    
     deezerUrl?: string;
     audiusUrl?: string;
     newsItems?: Array<{ title: string; url?: string; source?: string; score?: number }>;
@@ -45,7 +48,7 @@ function shortToolDisplayName(toolName?: string): string | undefined {
   return base.replace(/-/gu, " ");
 }
 
-/** Human title for MCP agent-chat style tools (read-inbox, list-agents, etc.). */
+
 function messagePreviewTitle(toolName: string | undefined, structuredTitle: string | undefined, extractedTitle: string, body: string): string {
   const st = structuredTitle?.trim();
   if (st) return st;
@@ -75,7 +78,7 @@ function hostnameKey(serverUrl?: string): string | undefined {
   }
 }
 
-/** Map MCP tool output to colony preview surface (music wall vs theatre vs neutral). YouTube/music MCP share tool names (`play`). */
+
 export function inferPreviewKind(toolName: string, opts?: { serverUrl?: string }): MediaPreview["kind"] {
   const slug = toolName.toLowerCase();
   const msgUrl = messageMcpEndpoint();
@@ -113,28 +116,28 @@ export function inferPreviewKind(toolName: string, opts?: { serverUrl?: string }
 
   if (/youtube|youtu|video|subtitle|playlist|shorts/i.test(slug)) return "video";
   if (/music|song|track|deezer|audius|spotify/i.test(slug)) return "music";
-  /* Ambiguous `play`: default `video` so YouTube MCP results still use the embed dock when hostname ≠ configured presets. Earlier branches route music MCP via MU URL match / young-surf host. */
+  
   return "video";
 }
 
 const YOUTUBE_IN_TEXT =
   /https?:\/\/(?:www\.|m\.|music\.)?youtube\.com\/[^\s"'<>]+|https?:\/\/youtu\.be\/[^\s"'<>]+/iu;
 
-/** Pull a YouTube URL from MCP text when structured fields are sparse. */
+
 export function extractYoutubeUrlFromText(text?: string): string | undefined {
   if (!text?.trim()) return undefined;
   const m = text.match(YOUTUBE_IN_TEXT);
   return m?.[0]?.replace(/[),.;]+$/u, "").replace(/[<>'"]+$/, "").trim();
 }
 
-/** Safer iframe query flags for colony embeds (no autoplay burst). Applies to youtube.com and youtube-nocookie.com (video-yt). */
+
 export function youtubeEmbedIframeSrc(embedUrl: string): string {
   const t = embedUrl.trim();
-  if (!/youtube(?:-nocookie)?\.com\/embed\//i.test(t)) return embedUrl;
+  if (!/youtube(?:-nocookie)?\.com\/embed\//i.test(t)) return t;
   const sep = t.includes("?") ? "&" : "?";
-  return `${t}${sep}rel=0&modestbranding=1&playsinline=1`;
-}
+  return `${t}${sep}rel=0&modestbranding=1&playsinline=1&autoplay=1`;
 
+}
 export function normalizeMediaPreview(
   output: unknown,
   kind: MediaPreview["kind"],
@@ -155,15 +158,23 @@ export function normalizeMediaPreview(
       ? messagePreviewTitle(mcpToolName, structured?.title, extractTitle(toolOutput), body)
       : structured?.title || extractTitle(toolOutput) || (kind === "voice" ? "Voice response" : "Media preview");
 
+  // YouTube MCP returns videoId in structuredContent; build watch + embed from it
+  const ytWatchFromId = structured?.videoId
+    ? `https://www.youtube.com/watch?v=${structured.videoId}`
+    : undefined;
+  const ytEmbedFromId = structured?.videoId
+    ? `https://www.youtube-nocookie.com/embed/${structured.videoId}`
+    : undefined;
+
   const preview: MediaPreview = {
     kind,
     title,
-    artist: structured?.artist,
+    artist: structured?.artist ?? structured?.author,
     album: structured?.album,
-    coverUrl: structured?.coverUrl,
+    coverUrl: structured?.coverUrl ?? structured?.thumbnail,
     previewUrl: structured?.previewUrl,
-    videoUrl: structured?.videoUrl || structured?.deezerUrl || structured?.audiusUrl,
-    embedUrl: structured?.embedUrl,
+    videoUrl: ytWatchFromId ?? structured?.videoUrl ?? structured?.deezerUrl ?? structured?.audiusUrl,
+    embedUrl: ytEmbedFromId ?? structured?.embedUrl,
     deezerUrl: structured?.deezerUrl,
     audiusUrl: structured?.audiusUrl,
     summary: body || undefined,
@@ -343,7 +354,7 @@ export function toEmbedUrl(url?: string): string | undefined {
 
   let u: URL;
   try {
-    u = new URL(raw.startsWith("http") ? raw : `https://${raw}`);
+    u = new URL(raw.startsWith("http") ? raw : `https://${raw.replace(/^\/+/, "")}`);
   } catch {
     const fromQuery = raw.match(/[?&]v=([A-Za-z0-9_-]{11}|[A-Za-z0-9_-]{6,})/u)?.[1];
     if (fromQuery) return `https://www.youtube.com/embed/${fromQuery}`;

@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useVeilStore } from "@/store/use-veil-store";
-import type { SpeechRecognition, SpeechRecognitionEvent } from "@/types/veil";
+import { useSuperNovaStore } from "@/store/use-supernova-store";
+import { interruptSpeech } from "@/lib/elevenlabs";
+import type { SpeechRecognition, SpeechRecognitionEvent } from "@/types/supernova";
 
 const WAKE_PHRASES = ["hey vee", "vee"];
 
@@ -18,34 +19,39 @@ export function useVoice({ onIntent }: UseVoiceOptions) {
   const startingRef = useRef(false);
   const listeningRef = useRef(false);
   const phaseRef = useRef<"startup" | "idle" | "listening" | "thinking" | "orchestrating" | "speaking" | "interrupted" | "error">("idle");
-  /** When true, Web Speech stays off — avoids Echo + duplicate intents firing `abort`/interrupt during VEIL replies. */
+  
   const micHoldRef = useRef(false);
+  const isSuppressedRef = useRef(false);
   const [supported, setSupported] = useState(true);
   const [listening, setListening] = useState(false);
   const [status, setStatus] = useState<"idle" | "starting" | "listening" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
-  const { phase, setPhase, setTranscript, setAudioLevel } = useVeilStore();
+  const { phase, isMicSuppressed, setPhase, setTranscript, setAudioLevel } = useSuperNovaStore();
 
   useEffect(() => {
     phaseRef.current = phase;
   }, [phase]);
 
   useEffect(() => {
-    const hold =
-      phase === "thinking" || phase === "orchestrating" || phase === "speaking";
+    isSuppressedRef.current = isMicSuppressed;
+  }, [isMicSuppressed]);
 
-    micHoldRef.current = hold;
+  useEffect(() => {
+    // Only phase-based holds actually stop the mic.
+    // isMicSuppressed keeps the mic alive but filters commands in onresult.
+    const phaseHold = phase === "thinking" || phase === "orchestrating";
+    micHoldRef.current = phaseHold;
 
     const rec = recognitionRef.current;
-    if (hold && rec && keepListeningRef.current) {
+    if (phaseHold && rec && keepListeningRef.current) {
       try {
         rec.stop();
       } catch {
-        /* already halted */
+        /* ignore */
       }
     }
 
-    if (!hold && keepListeningRef.current && rec) {
+    if (!phaseHold && keepListeningRef.current && rec) {
       const timeoutId = window.setTimeout(() => {
         if (
           micHoldRef.current ||
@@ -58,14 +64,14 @@ export function useVoice({ onIntent }: UseVoiceOptions) {
         try {
           recognitionRef.current.start();
         } catch {
-          /* already listening */
+          /* ignore */
         }
       }, 420);
       return () => window.clearTimeout(timeoutId);
     }
 
     return undefined;
-  }, [phase]);
+  }, [phase, isMicSuppressed]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -136,7 +142,29 @@ export function useVoice({ onIntent }: UseVoiceOptions) {
         else interim += result[0].transcript;
       }
 
+      // Phase hold (thinking/orchestrating): block everything
       if (micHoldRef.current) return;
+
+      // Any speech interrupts Vee while she's speaking
+      if (phaseRef.current === "speaking" && (interim.trim() || final.trim())) {
+        micHoldRef.current = true;
+        interruptSpeech();
+        lastFinalRef.current = "";
+        try { recognitionRef.current?.stop(); } catch { /* ignore */ }
+        useSuperNovaStore.getState().setPhase("idle");
+        return;
+      }
+
+      // Media suppression: mic stays on but only media-control commands pass through
+      if (isSuppressedRef.current) {
+        const MEDIA_CONTROL_RE = /\b(close|stop|hide|dismiss|exit|shut|pause|end)\b.{0,30}\b(browser|youtube|video|player|window|widget|panel|music|song|audio|tab)\b/i;
+        if (final.trim() && MEDIA_CONTROL_RE.test(final)) {
+          lastFinalRef.current = "";
+          try { recognitionRef.current?.stop(); } catch { /* ignore */ }
+          onIntent(final.trim());
+        }
+        return;
+      }
 
       const current = `${lastFinalRef.current} ${final} ${interim}`.trim();
       setTranscript(current);

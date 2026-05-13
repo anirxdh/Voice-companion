@@ -1,4 +1,4 @@
-/** Client-side line for TTS when the user asks for the local clock (no MCP time tool). */
+
 export async function spokenLocalTimeLine(): Promise<string> {
   try {
     const res = await fetch("/api/weather");
@@ -22,7 +22,7 @@ export async function spokenLocalTimeLine(): Promise<string> {
       }
     }
   } catch {
-    /* fall through */
+    
   }
 
   return `It's ${new Date().toLocaleString(undefined, { weekday: "long", dateStyle: "medium", timeStyle: "short" })} in your browser's local zone.`;

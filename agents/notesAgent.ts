@@ -1,4 +1,4 @@
-import type { AgentExecutionContext } from "@/types/veil";
+import type { AgentExecutionContext } from "@/types/supernova";
 import { runToolAgent } from "@/agents/base";
 
 export async function notesAgent(context: AgentExecutionContext) {

@@ -36,12 +36,12 @@ function fakeLevels(t: number, playing: boolean, bins: number): number[] {
 
 type PlaybackWallVisualizerProps = {
   playing: boolean;
-  /** Default wide strip for the colony mic-wall hologram. */
+  
   barCount?: number;
   className?: string;
 };
 
-/** Wall hologram bars: real FFT when analyser is available (CORS OK), otherwise soft motion fallback. */
+
 export function PlaybackWallVisualizer({ playing, barCount = 36, className }: PlaybackWallVisualizerProps) {
   const [levels, setLevels] = useState<number[]>(() => Array(barCount).fill(0.1));
   const barKeys = useMemo(() => Array.from({ length: barCount }, (_, i) => i), [barCount]);

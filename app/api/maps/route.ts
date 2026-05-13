@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
-const UA = "VEIL-Colony/1.0 (assistant demo; nominatim forward-geocode)";
+const UA = "Super Nova/1.0 (assistant demo; nominatim forward-geocode)";
 const BASE = "https://nominatim.openstreetmap.org/search";
 
 type NHit = { lat: string; lon: string; display_name?: string };
@@ -68,3 +68,4 @@ export async function GET(req: NextRequest) {
     speech
   });
 }
+

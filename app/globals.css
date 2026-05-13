@@ -498,9 +498,35 @@ body {
 
 @media (max-width: 640px), (max-height: 520px) {
   .voice-orb {
-    left: 12px;
-    bottom: 12px;
     width: 72px;
     height: 72px;
   }
+}
+
+
+@keyframes hudDotPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.42; transform: scale(0.75); }
+}
+
+
+@keyframes roomGlowPulse {
+  0%, 100% { opacity: 0.72; transform: translate(-50%, -50%) scale(1); }
+  50%       { opacity: 1;    transform: translate(-50%, -50%) scale(1.18); }
+}
+
+.room-glow-pulse {
+  animation: roomGlowPulse 2.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .room-glow-pulse { animation: none; }
+  .voice-hud-root  { transition: none; }
+}
+
+
+
+@keyframes clickRipple {
+  0%   { transform: scale(0.5); opacity: 1; }
+  100% { transform: scale(2.2); opacity: 0; }
 }

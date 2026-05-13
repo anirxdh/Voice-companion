@@ -1,4 +1,4 @@
-/** Client-only alarm/timer feedback (Web Audio + optional Notification API). */
+
 
 let ctxCache: AudioContext | null = null;
 
@@ -56,7 +56,7 @@ export function colonyDeskNotify(payload: { title: string; body: string }): void
   try {
     new Notification(payload.title, {
       body: payload.body.slice(0, 220),
-      tag: `veil-desk-${Date.now()}`,
+      tag: `supernova-desk-${Date.now()}`,
       requireInteraction: true
     });
   } catch {

@@ -4,7 +4,7 @@ import { htmlToPlainDocument } from "@/lib/html-to-plain";
 
 export const runtime = "nodejs";
 
-const UA = "VEIL-Colony/1.0 (browse snapshot; +https://github.com/)";
+const UA = "Super Nova/1.0 (browse snapshot; +https://github.com/)";
 
 type FirecrawlScrapeResponse = {
   success?: boolean;
@@ -128,3 +128,4 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "browse_failed", speech: msg, url: href }, { status: 502 });
   }
 }
+

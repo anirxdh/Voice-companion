@@ -1,4 +1,4 @@
-import type { MemoryCard, ProactiveInsight } from "@/types/veil";
+import type { MemoryCard, ProactiveInsight } from "@/types/supernova";
 
 export function generateProactiveInsights(memory: MemoryCard[], workDurationMinutes: number): ProactiveInsight[] {
   const insights: ProactiveInsight[] = [];
@@ -24,7 +24,7 @@ export function generateProactiveInsights(memory: MemoryCard[], workDurationMinu
   insights.push({
     id: "continuity",
     title: "Workflow continuity",
-    detail: "VEIL can restore context across apps without manual navigation.",
+    detail: "Super Nova can restore context across apps without manual navigation.",
     mood: "focus"
   });
 

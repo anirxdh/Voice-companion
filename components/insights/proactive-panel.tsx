@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { Activity, Moon, Radar, Zap } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { useVeilStore } from "@/store/use-veil-store";
+import { useSuperNovaStore } from "@/store/use-supernova-store";
 
 const iconMap = {
   calm: Radar,
@@ -13,7 +13,7 @@ const iconMap = {
 };
 
 export function ProactivePanel() {
-  const insights = useVeilStore((state) => state.insights);
+  const insights = useSuperNovaStore((state) => state.insights);
 
   return (
     <aside className="pointer-events-auto absolute right-5 top-24 hidden w-[310px] space-y-3 xl:block">

@@ -8,12 +8,9 @@ import {
   resumeColonyAudio
 } from "@/lib/colony-clock-ring";
 import { interruptSpeech, speakWithElevenLabs } from "@/lib/elevenlabs";
-import { useVeilStore } from "@/store/use-veil-store";
+import { useSuperNovaStore } from "@/store/use-supernova-store";
 
-/**
- * Runs while VEIL is open: fires wall-clock alarms and countdown timers at their due time,
- * with chime + optional desktop notification (+ short TTS when ElevenLabs is configured).
- */
+
 export function ColonyClockRinger() {
   useEffect(() => {
     const onPointerDown = () => void resumeColonyAudio();
@@ -26,7 +23,7 @@ export function ColonyClockRinger() {
       const nowDate = new Date();
       const minuteBucket = Math.floor(nowWall / 60000);
 
-      const snapshot = useVeilStore.getState();
+      const snapshot = useSuperNovaStore.getState();
 
       const ampmLine = nowDate.toLocaleTimeString(undefined, {
         hour: "numeric",
@@ -45,7 +42,7 @@ export function ColonyClockRinger() {
       );
 
       if (candidates.length > 0) {
-        const st0 = useVeilStore.getState();
+        const st0 = useSuperNovaStore.getState();
         for (const c of candidates) {
           st0.markAlarmRingAtMinuteBucket(c.id, minuteBucket);
         }
@@ -61,11 +58,11 @@ export function ColonyClockRinger() {
         }
 
         colonyDeskNotify({
-          title: "VEIL alarm",
+          title: "Super Nova alarm",
           body: subtitle
         });
 
-        const st = useVeilStore.getState();
+        const st = useSuperNovaStore.getState();
         st.addTimelineEvent({
           kind: "system",
           title: "Alarm sounding",
@@ -90,12 +87,12 @@ export function ColonyClockRinger() {
         }).catch(() => undefined);
       }
 
-      const timersSnap = [...useVeilStore.getState().activeTimers];
+      const timersSnap = [...useSuperNovaStore.getState().activeTimers];
 
       for (const t of timersSnap) {
         if (t.endsAtMs > nowWall) continue;
         const sig = `${t.id}:${t.endsAtMs}`;
-        const st = useVeilStore.getState();
+        const st = useSuperNovaStore.getState();
 
         if (timerRungSig.has(sig)) {
           st.removeActiveTimer(t.id);
@@ -110,7 +107,7 @@ export function ColonyClockRinger() {
 
         const labelSuffix = t.label?.trim() ? ` · ${t.label.trim()}` : "";
         colonyDeskNotify({
-          title: "VEIL timer",
+          title: "Super Nova timer",
           body: `Timer finished${labelSuffix}`
         });
 

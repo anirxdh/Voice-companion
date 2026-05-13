@@ -1,4 +1,4 @@
-import type { MemoryCard, ProactiveInsight, TimelineEvent } from "@/types/veil";
+import type { MemoryCard, ProactiveInsight, TimelineEvent } from "@/types/supernova";
 
 export type ContextSnapshot = {
   now: string;

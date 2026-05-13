@@ -1,4 +1,4 @@
-/** Central place for MCP HTTP URLs: semantic env vars + legacy `NEXT_PUBLIC_MCP_ENDPOINT_1/2`. */
+
 
 const DEFAULT_ENDPOINTS = [
   "https://still-thunder-8btdl.run.mcp-use.com/mcp",
@@ -30,7 +30,7 @@ function dedupeUrls(urls: string[]): string[] {
   return out;
 }
 
-/** All MCP base URLs used by `connectToMCPServers` (NEXT_PUBLIC_*). */
+
 export function getMcpDiscoverUrls(): string[] {
   if (typeof process === "undefined" || !process.env) {
     return [...DEFAULT_ENDPOINTS];
