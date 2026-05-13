@@ -94,16 +94,17 @@ export async function GET(req: NextRequest) {
   let speech = "";
 
   if (origin) {
-    const [drive, walk, bike] = await Promise.all([
-      osrmRoute("driving", origin, dest),
-      osrmRoute("walking", origin, dest),
-      osrmRoute("cycling", origin, dest)
-    ]);
+    // Only the driving profile is reliable on the public OSRM demo server.
+    // Walking and cycling use haversine × a realistic path-length factor instead
+    // so all three modes always show meaningfully different times.
+    const drive = await osrmRoute("driving", origin, dest);
 
     const straightDistance = haversineDistanceM(origin, dest);
     const driveRoute = drive ?? { distanceM: straightDistance, durationSec: estimateDuration(straightDistance, "driving") };
-    const walkRoute = walk ?? { distanceM: straightDistance, durationSec: estimateDuration(straightDistance, "walking") };
-    const bikeRoute = bike ?? { distanceM: straightDistance, durationSec: estimateDuration(straightDistance, "cycling") };
+    const walkDist = Math.round(straightDistance * 1.28);
+    const bikeDist = Math.round(straightDistance * 1.18);
+    const walkRoute = { distanceM: walkDist, durationSec: estimateDuration(walkDist, "walking") };
+    const bikeRoute = { distanceM: bikeDist, durationSec: estimateDuration(bikeDist, "cycling") };
 
     routes.push({ mode: "driving", distanceM: driveRoute.distanceM, durationSec: driveRoute.durationSec });
     routes.push({ mode: "walking", distanceM: walkRoute.distanceM, durationSec: walkRoute.durationSec });
