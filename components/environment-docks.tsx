@@ -809,7 +809,7 @@ export function BrowseEnvironmentDock({
       </div>
       <p className="shrink-0 border-t border-cyan-200/16 px-2.5 py-2 text-[9px] leading-snug text-cyan-200/52">
         Add <span className="font-mono text-cyan-100/70">FIRECRAWL_API_KEY</span> server-side for Firecrawl v2 scrape; otherwise Super Nova strips HTML. Built-in{' '}
-        <span className="font-mono text-cyan-100/78">browse_page</span>.
+        <span className="font-mono text-cyan-100/78">page snapshot</span>.
       </p>
     </motion.div>
   );

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSuperNovaStore } from "@/store/use-supernova-store";
 import { interruptSpeech } from "@/lib/elevenlabs";
+import { unlockAudioAutoplay } from "@/lib/music-player";
 import type { SpeechRecognition, SpeechRecognitionEvent } from "@/types/supernova";
 
 const WAKE_PHRASES = ["hey vee", "vee"];
@@ -203,6 +204,9 @@ export function useVoice({ onIntent }: UseVoiceOptions) {
     if (startingRef.current || listeningRef.current) {
       return true;
     }
+
+    // Unlock audio autoplay while we're inside a user gesture
+    unlockAudioAutoplay();
 
     startingRef.current = true;
     setStatus("starting");

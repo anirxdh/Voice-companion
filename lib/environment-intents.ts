@@ -97,6 +97,8 @@ export function wantsMapsOrchestration(text: string): boolean {
   const n = text.trim().toLowerCase().replace(/[.,!?]+$/, "");
   if (!n) return false;
 
+  if (wantsOpenBrowser(n) || wantsBrowseOrchestration(n)) return false;
+
   const definiteMap =
     /\b(map\b|maps\b|coordinates\b|\blatitude\b|\blocate\b|\broute\b|\bnavi(gate)?\s+to\b)/u.test(n) ||
     /\b(show|plot|bring\s+up|pin)\s+.{0,18}\batlas\b/u.test(n) ||
@@ -104,8 +106,13 @@ export function wantsMapsOrchestration(text: string): boolean {
 
   if (definiteMap) return true;
 
-  const nonMapKw = /\b(news|headlines|weather|forecast|video|youtube|music|notes?|alarm|timer|inbox|email|message|wiki|wikipedia|spotify|netflix|github|twitter|reddit|instagram|twitch|discord|photos?|pictures?|images?|update|settings?)\b/u;
+  const nonMapKw =
+    /\b(news|headlines|weather|forecast|video|youtube|music|notes?|alarm|timer|inbox|email|message|wiki|wikipedia|spotify|netflix|github|twitter|reddit|instagram|twitch|discord|photos?|pictures?|images?|update|settings?)\b/u;
   if (nonMapKw.test(n)) return false;
+
+  const browserKw =
+    /\b(browser|browse|web|website|site|page|link|url|search|google|youtube|github|reddit|twitter|instagram|spotify|netflix|figma|notion|discord|twitch|gmail|stackoverflow|medium|substack)\b/u;
+  if (browserKw.test(n)) return false;
 
   // Allow commas in place names like "Venice Beach, Los Angeles"
   return /\b(show|find|locate|display|open)\s+(me\s+)?(the\s+|a\s+)?[a-z][a-z',\s-]{2,}$/u.test(n);
