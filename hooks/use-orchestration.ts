@@ -9,11 +9,14 @@ import {
   extractApodCalendarDate,
   extractMapsPlaceQuery,
   extractDirectionsFromTo,
+  extractBrowseUrl,
   extractStickyNoteAppendBody,
   extractTimerDurationSec,
   extractWikiScoutQuery,
   extractWeatherCityQuery,
+  extractOpenBrowserUrl,
   stickyNoteVoiceAction,
+  wantsBrowseOrchestration,
   wantsClockDeskOrchestration,
   wantsDirectionsOrchestration,
   wantsMapsOrchestration,
@@ -22,6 +25,8 @@ import {
   wantsScoutOrchestration,
   wantsStickyNoteOrchestration,
   wantsWeatherOrchestration,
+  wantsOpenBrowser,
+  wantsBrowserPageAction
 } from "@/lib/environment-intents";
 import { inferTaskRoom, isActionIntent, isConversationalIntent, isLocalTimeIntent } from "@/lib/intent";
 import { spokenLocalTimeLine } from "@/lib/local-time";
@@ -131,6 +136,15 @@ export function useOrchestration() {
           status: update.tool.status,
           toolName: update.tool.toolName
         });
+      }
+      if (update.type === "open-browser") {
+        useSuperNovaStore.getState().setActiveRoom("browser");
+        useSuperNovaStore.getState().openBrowserModal(update.url);
+        fetch("/api/browser", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "open", url: update.url })
+        }).catch(() => undefined);
       }
       if (update.type === "timeline") useSuperNovaStore.getState().addTimelineEvent(update.event);
       if (update.type === "error") {
@@ -456,6 +470,91 @@ export function useOrchestration() {
         } catch (error) {
           const msg = error instanceof Error ? error.message : "Notes request failed.";
           useSuperNovaStore.getState().addTimelineEvent({ kind: "error", title: "Notes unavailable", detail: msg });
+          useSuperNovaStore.getState().setPhase("idle");
+          useSuperNovaStore.getState().setActiveRoom(null);
+        }
+        return;
+      }
+
+      if (wantsBrowseOrchestration(intent.trim())) {
+        useSuperNovaStore.getState().resetOrchestration();
+        useSuperNovaStore.getState().setTranscript(intent);
+        useSuperNovaStore.getState().setActiveRoom("browser");
+        useSuperNovaStore.getState().setPhase("thinking");
+        useSuperNovaStore.getState().addTimelineEvent({
+          kind: "system",
+          title: "Browse strip",
+          detail: "/api/browse · veil__browse_page · optional FIRECRAWL_API_KEY"
+        });
+
+        try {
+          const url = extractBrowseUrl(intent.trim());
+          if (!url?.trim()) {
+            useSuperNovaStore.getState().addTimelineEvent({ kind: "error", title: "Browse", detail: "Add a cue like browse or summarise plus https link." });
+            useSuperNovaStore.getState().setPhase("idle");
+            useSuperNovaStore.getState().setActiveRoom(null);
+            return;
+          }
+
+          const res = await fetch(`/api/browse?url=${encodeURIComponent(url.trim())}`, { headers: { accept: "application/json" } });
+          const json = (await res.json()) as {
+            title?: string;
+            url?: string;
+            markdown?: string;
+            summary?: string;
+            speech?: string;
+            source?: "firecrawl" | "plain";
+            error?: string;
+          };
+
+          if (!res.ok) {
+            const errLine = typeof json.speech === "string" ? json.speech : typeof json.error === "string" ? json.error : "Browse failed.";
+            useSuperNovaStore.getState().addTimelineEvent({ kind: "error", title: "Browse fault", detail: errLine.slice(0, 320) });
+            useSuperNovaStore.getState().setPhase("idle");
+            useSuperNovaStore.getState().setActiveRoom(null);
+            return;
+          }
+
+          const speech =
+            typeof json.speech === "string" && json.speech.trim()
+              ? json.speech.trim()
+              : typeof json.summary === "string"
+                ? json.summary.slice(0, 460)
+                : "Snapshotted that page.";
+
+          const briefUrl = typeof json.url === "string" ? json.url : url.trim();
+          const mk = typeof json.markdown === "string" ? json.markdown : "";
+
+          useSuperNovaStore.getState().openAmbientPreview({
+            kind: "browsedesk",
+            title: json.title ?? briefUrl.replace(/^https?:\/\//iu, "").slice(0, 96),
+            summary: typeof json.summary === "string" ? json.summary : mk.slice(0, 880),
+            browseBrief: {
+              url: briefUrl,
+              title: typeof json.title === "string" ? json.title : undefined,
+              markdown: mk || (typeof json.summary === "string" ? json.summary : speech),
+              source: json.source === "firecrawl" ? "firecrawl" : "plain"
+            },
+            spokenText: speech
+          });
+
+          useSuperNovaStore.getState().setFinalResponse(speech);
+          useSuperNovaStore.getState().setPhase("speaking");
+          abortRef.current = new AbortController();
+          await speakWithElevenLabs({
+            text: speech,
+            voiceId: process.env.NEXT_PUBLIC_ELEVENLABS_VOICE_ID,
+            signal: abortRef.current.signal,
+            emotion: "calm"
+          })
+            .catch(() => undefined)
+            .finally(() => {
+              useSuperNovaStore.getState().setActiveRoom(null);
+              useSuperNovaStore.getState().setPhase("idle");
+            });
+        } catch (error) {
+          const msg = error instanceof Error ? error.message : "Browse failed.";
+          useSuperNovaStore.getState().addTimelineEvent({ kind: "error", title: "Browse unavailable", detail: msg });
           useSuperNovaStore.getState().setPhase("idle");
           useSuperNovaStore.getState().setActiveRoom(null);
         }
@@ -790,7 +889,88 @@ export function useOrchestration() {
         return;
       }
 
-      // Browser/tool routing removed. Browser phrases now fall through to conversation.
+      // Browser page action — only fires when the browser is already open
+      if (wantsBrowserPageAction(intent) && useSuperNovaStore.getState().browserModalUrl) {
+        useSuperNovaStore.getState().resetOrchestration();
+        useSuperNovaStore.getState().setTranscript(intent);
+        useSuperNovaStore.getState().setActiveRoom("browser");
+        useSuperNovaStore.getState().setPhase("orchestrating");
+        useSuperNovaStore.getState().addTimelineEvent({
+          kind: "system",
+          title: "Browser action",
+          detail: intent.slice(0, 80)
+        });
+        try {
+          const res = await fetch("/api/browser", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "task", command: intent.trim() })
+          });
+          const json = (await res.json()) as { success?: boolean; steps?: number; error?: string };
+          const speech = json.success
+            ? `Done — ran ${json.steps ?? "the"} steps on the page.`
+            : `Browser action failed: ${json.error ?? "unknown error"}.`;
+          useSuperNovaStore.getState().setFinalResponse(speech);
+          useSuperNovaStore.getState().setPhase("speaking");
+          abortRef.current = new AbortController();
+          await speakWithElevenLabs({
+            text: speech,
+            voiceId: process.env.NEXT_PUBLIC_ELEVENLABS_VOICE_ID,
+            signal: abortRef.current.signal,
+            emotion: "calm"
+          })
+            .catch(() => undefined)
+            .finally(() => {
+              useSuperNovaStore.getState().setActiveRoom(null);
+              useSuperNovaStore.getState().setPhase("idle");
+            });
+        } catch (error) {
+          const msg = error instanceof Error ? error.message : "Browser action failed.";
+          useSuperNovaStore.getState().addTimelineEvent({ kind: "error", title: "Browser action fault", detail: msg });
+          useSuperNovaStore.getState().setPhase("idle");
+          useSuperNovaStore.getState().setActiveRoom(null);
+        }
+        return;
+      }
+
+      if (wantsOpenBrowser(intent)) {
+        const url = extractOpenBrowserUrl(intent.trim());
+        const hostname = (() => {
+          try { return new URL(url).hostname.replace(/^www\./, ""); }
+          catch { return url; }
+        })();
+        useSuperNovaStore.getState().resetOrchestration();
+        useSuperNovaStore.getState().setTranscript(intent);
+        useSuperNovaStore.getState().setActiveRoom("browser");
+        useSuperNovaStore.getState().setPhase("thinking");
+        useSuperNovaStore.getState().addTimelineEvent({
+          kind: "system",
+          title: "Browser opened",
+          detail: `Navigating to ${hostname}`
+        });
+        useSuperNovaStore.getState().openBrowserModal(url);
+        fetch("/api/browser", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "open", url })
+        }).catch(() => undefined);
+        const speech = `Opening ${hostname} for you.`;
+        useSuperNovaStore.getState().setFinalResponse(speech);
+        useSuperNovaStore.getState().setPhase("speaking");
+        abortRef.current = new AbortController();
+        await speakWithElevenLabs({
+          text: speech,
+          voiceId: process.env.NEXT_PUBLIC_ELEVENLABS_VOICE_ID,
+          signal: abortRef.current.signal,
+          emotion: "calm"
+        })
+          .catch(() => undefined)
+          .finally(() => {
+            useSuperNovaStore.getState().setActiveRoom(null);
+            useSuperNovaStore.getState().setPhase("idle");
+          });
+        return;
+      }
 
       if (isConversationalIntent(intent) || !isActionIntent(intent)) {
         useSuperNovaStore.getState().setActiveRoom(null);

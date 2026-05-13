@@ -1,21 +1,6 @@
 let activeMusicAudio: HTMLAudioElement | null = null;
 let activeMusicUrl: string | null = null;
 
-// Keeps an AudioContext alive so audio.play() never hits NotAllowedError after mic start
-let _unlockCtx: AudioContext | null = null;
-
-export function unlockAudioAutoplay() {
-  if (typeof window === "undefined") return;
-  try {
-    if (!_unlockCtx || _unlockCtx.state === "closed") {
-      _unlockCtx = new AudioContext();
-    }
-    void _unlockCtx.resume();
-  } catch {
-    /* ignore — best effort */
-  }
-}
-
 const playbackStateListeners = new Set<(playing: boolean) => void>();
 const telemetryWired = new WeakSet<HTMLAudioElement>();
 
@@ -112,24 +97,13 @@ export async function playMusicPreview(previewUrl: string) {
   stopMusicPlayback();
   const audio = new Audio(previewUrl);
   audio.preload = "auto";
-  audio.crossOrigin = "anonymous";
-
+  
+  
   activeMusicAudio = audio;
   activeMusicUrl = previewUrl;
   wirePlaybackTelemetry(audio);
-
-  try {
-    await audio.play();
-  } catch (err) {
-    // Browser blocked autoplay — resume the unlock context and retry once
-    if (err instanceof DOMException && err.name === "NotAllowedError") {
-      if (_unlockCtx) await _unlockCtx.resume().catch(() => undefined);
-      await audio.play();
-    } else {
-      throw err;
-    }
-  }
-
+  await audio.play();
+  
   notifyPlaybackTelemetry();
   return audio;
 }

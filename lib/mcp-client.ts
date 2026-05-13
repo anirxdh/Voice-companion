@@ -1,5 +1,6 @@
 import type { ActiveTool, MCPTool, OrchestrationUpdate } from "@/types/supernova";
 import { uid } from "@/lib/utils";
+import { wantsBrowseOrchestration } from "@/lib/environment-intents";
 import {
   extractMusicQuery,
   extractYoutubeQuery,
@@ -324,6 +325,60 @@ async function runVeilBuiltinToolOutput(toolName: string, input: unknown): Promi
         title: "Sticky notes · Super Nova pad",
         stickyNotes: Array.isArray(json.notes) ? json.notes : [],
         summaryLines: json.summaryLines
+      }
+    };
+  }
+
+  if (name === "browse_page") {
+    const url = String(builtinVeilArguments(input).url ?? "").trim();
+    if (!url) throw new Error("browse_page requires url");
+    const res = await fetch(`/api/browse?url=${encodeURIComponent(url)}`, {
+      headers: { accept: "application/json" }
+    });
+    const json = (await res.json()) as {
+      title?: string;
+      url?: string;
+      markdown?: string;
+      summary?: string;
+      speech?: string;
+      source?: "firecrawl" | "plain";
+      error?: string;
+    };
+    if (!res.ok) {
+      const msg = typeof json.speech === "string" ? json.speech : typeof json.error === "string" ? json.error : "Browse failed.";
+      throw new Error(msg);
+    }
+    const speech =
+      typeof json.speech === "string"
+        ? json.speech.trim()
+        : typeof json.summary === "string"
+          ? json.summary.slice(0, 520).trim()
+          : "Snapshotted that page.";
+    const md = typeof json.markdown === "string" ? json.markdown : "";
+    const href = typeof json.url === "string" ? json.url : url;
+    const source = json.source === "firecrawl" || json.source === "plain" ? json.source : "plain";
+    let titleChip = typeof json.title === "string" ? json.title.trim() : "";
+    if (!titleChip) {
+      try {
+        const normalized = /^https?:\/\//iu.test(href) ? href : `https://${href.replace(/^\/+/u, "")}`;
+        titleChip = new URL(normalized).hostname;
+      } catch {
+        titleChip = "Browse snapshot";
+      }
+    }
+
+    const summarySlice =
+      typeof json.summary === "string" ? json.summary.slice(0, 2400).trim() : md.slice(0, 2400).trim();
+
+    return {
+      content: [{ type: "text", text: speech }],
+      structuredContent: {
+        title: titleChip,
+        browseUrl: href,
+        browseMarkdown: md,
+        browseSource: source,
+        speech,
+        browseSummarySlice: summarySlice || undefined
       }
     };
   }
@@ -1085,6 +1140,9 @@ function friendlyPostToolSpeech(intent: string): string {
   }
   if (/\b(map|maps|where is|located|coordinates|navigation|street)\b/u.test(n)) {
     return "The atlas iframe is hovering over the stack grid near the stacks tile.";
+  }
+  if (wantsBrowseOrchestration(intent)) {
+    return "A browse strip floated up beside the hive browser screen.";
   }
   if (/\b(wikipedia|scout|tell me about|who is\b|looking up\b)\b/u.test(n)) {
     return "The scout dossier is centred on your hub hologram.";

@@ -1,12 +1,12 @@
 import {
+  wantsBrowseOrchestration,
   wantsClockDeskOrchestration,
   wantsMapsOrchestration,
   wantsNewsOrchestration,
   wantsOrbitOrchestration,
   wantsScoutOrchestration,
   wantsStickyNoteOrchestration,
-  wantsWeatherOrchestration,
-  wantsOpenBrowser
+  wantsWeatherOrchestration
 } from "@/lib/environment-intents";
 
 const GREETING_PATTERNS = [
@@ -64,7 +64,7 @@ const MUSIC_PATTERNS = [
 const ACTION_PATTERNS = [
   /\b(play|pause|resume|next|previous|back|queue|volume|mute|unmute|now playing)\b/i,
   /^(open|launch|search|check|show|set|create|add|delete|remind|message|email|call|text|book|schedule)\b/i,
-  /\b(calenda?r|notes?|message(s)?|emails?|reminder(s)?|tasks?|files?|downloads?|youtube|spotify)\b/i,
+  /\b(calenda?r|notes?|message(s)?|emails?|reminder(s)?|tasks?|files?|downloads?|browser|youtube|spotify)\b/i,
   /\binbox\b/i,
   /\b(notification|notifications)\b/i,
   /\b(headlines|breaking\s+news|hacker\s*news|^hn\b|\bHN\b)/i,
@@ -87,9 +87,9 @@ export function isConversationalIntent(input: string) {
   if (wantsClockDeskOrchestration(normalized)) return false;
   if (wantsStickyNoteOrchestration(normalized)) return false;
   if (wantsMapsOrchestration(normalized)) return false;
+  if (wantsBrowseOrchestration(input.trim())) return false;
   if (wantsScoutOrchestration(normalized)) return false;
   if (wantsOrbitOrchestration(normalized)) return false;
-  if (wantsOpenBrowser(normalized)) return true;
   
   if (ACTION_PATTERNS.some((pattern) => pattern.test(normalized))) return false;
 
@@ -117,6 +117,7 @@ export function inferTaskRoom(input: string) {
   const raw = input.trim();
   const normalized = raw.toLowerCase();
   if (!normalized) return null;
+  if (wantsBrowseOrchestration(raw)) return "browser";
   if (
     /\b(youtube|youtu\.be)\b|\b(shorts)\b|\b(find|watch|show|open|lookup|look\s+up|search\s+for?)\s+.{0,48}\b(video|videos|shorts)\b|\b(video|videos)\s+.{0,20}\b(about|for|on)\b|\b(play|watch)\s+.{0,20}\b(video|videos|youtube)\b/i.test(normalized)
   ) {
@@ -131,6 +132,7 @@ export function inferTaskRoom(input: string) {
   if (/\bwiki(pedia)?\b|^lookup\b|\bscout\b|\btell\s+me\s+about\b|\bwho\s+is\b|\blens\b/i.test(normalized)) return "library";
   if (/\b(apod|orbit\s+deck|nasa\b.*picture|galaxy|nebula|cosmos|space)\b/i.test(normalized)) return "archive";
   if (/\b(map\b|atlas\b|coordinates)\b/i.test(normalized)) return "library";
+  if (/(browser|open|search|google|website|site|summarize|signal)/i.test(normalized)) return "browser";
   if (/(archive|history|old|saved)/i.test(normalized)) return "archive";
   return null;
 }

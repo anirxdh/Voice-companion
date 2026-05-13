@@ -30,6 +30,19 @@ export const VEIL_BUILTIN_TOOLS: MCPTool[] = [
     }
   },
   {
+    id: `${VEIL_BUILTIN_MCP_URL}:browse_page`,
+    serverUrl: VEIL_BUILTIN_MCP_URL,
+    name: "browse_page",
+    description:
+      "Fetch a readable page snapshot from a public https URL — uses Firecrawl v2 scrape when FIRECRAWL_API_KEY is set, otherwise VEIL strips HTML server-side (browse/scrape/read this page intents). Requires url.",
+    inputSchema: {
+      type: "object",
+      properties: { url: { type: "string" } },
+      required: ["url"],
+      additionalProperties: true
+    }
+  },
+  {
     id: `${VEIL_BUILTIN_MCP_URL}:wiki_scout`,
     serverUrl: VEIL_BUILTIN_MCP_URL,
     name: "wiki_scout",
