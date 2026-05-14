@@ -4,23 +4,6 @@ A voice-controlled AI operating system. One voice command summons weather, music
 
 ---
 
-## Demo
-
-Speak to the orb. Your AI crew responds.
-
-| Command | What happens |
-|---------|-------------|
-| `"Play Blinding Lights by The Weeknd"` | Music dock opens, visualizer pulses, colony vibes |
-| `"Show me today's NASA photo"` | Astronomy Picture of the Day renders with Vee narrating |
-| `"Who is Nikola Tesla"` | Wikipedia card with portrait and summary |
-| `"Show me a YouTube video of aurora borealis"` | Embedded player autoplays inline |
-| `"What's the weather in Tokyo"` | Live weather card with conditions and temperature |
-| `"Directions from Tokyo to Mount Fuji"` | OpenStreetMap embed + car / walk / bike travel times |
-| `"Set a timer for 3 minutes"` | Countdown timer overlay |
-| `"Make a note: the colony never sleeps"` | Sticky note appears on screen |
-
----
-
 ## Stack
 
 - **Next.js 15** — App Router, API routes
