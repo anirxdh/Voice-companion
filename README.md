@@ -7,8 +7,9 @@
 *No keyboard. No clicks. Just talk.*
 
 [![Live Demo](https://img.shields.io/badge/▶︎_live_demo-voice--companion--rust.vercel.app-7c3aed?style=for-the-badge)](https://voice-companion-rust.vercel.app)
+[![Watch on YouTube](https://img.shields.io/badge/▶︎_watch_demo-YouTube-ff0000?style=for-the-badge&logo=youtube&logoColor=white)](https://youtu.be/LCzO5H1y5q8)
 [![Built for ElevenHacks](https://img.shields.io/badge/Built_for-%23ElevenHacks-ff4d6d?style=for-the-badge)](https://elevenlabs.io)
-[![Made with Cursor](https://img.shields.io/badge/Made_with-Cursor-000000?style=for-the-badge&logo=cursor)](https://cursor.com)
+[![Made with Cursor](https://img.shields.io/badge/Made_with-Cursor-000000?style=for-the-badge)](https://cursor.com)
 
 ![Super Nova demo](./COMIC.gif)
 
@@ -28,7 +29,8 @@ Built end-to-end in [Cursor](https://cursor.com) and powered by [ElevenLabs](htt
 
 ## 🎬 Demo
 
-🌐 **Live:** [voice-companion-rust.vercel.app](https://voice-companion-rust.vercel.app)
+📺 **Watch the demo:** [youtu.be/LCzO5H1y5q8](https://youtu.be/LCzO5H1y5q8)
+🌐 **Try it live:** [voice-companion-rust.vercel.app](https://voice-companion-rust.vercel.app)
 *(Chrome required — the Web Speech API is Chromium-only. Allow mic access on first load.)*
 
 Try saying:
@@ -261,7 +263,7 @@ Built by **[@anirxdh](https://github.com/anirxdh)** for **[#ElevenHacks](https:/
 
 <div align="center">
 
-**[🌐 Try the live demo →](https://voice-companion-rust.vercel.app)**
+**[📺 Watch the demo](https://youtu.be/LCzO5H1y5q8)** &nbsp;•&nbsp; **[🌐 Try it live](https://voice-companion-rust.vercel.app)**
 
 *Tag [@cursor](https://x.com/cursor_ai) and [@elevenlabsio](https://x.com/elevenlabsio) if you build something with it.*
 
