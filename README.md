@@ -1,6 +1,6 @@
-# SuperNova — Voice OS
+# Super Nova — Your AI Companion
 
-A voice-controlled AI operating system. One voice command summons weather, music, maps, NASA photos, YouTube, Wikipedia, timers, and more — all rendered as living widgets inside an animated colony environment.
+A voice-controlled AI companion. One voice command summons weather, music, maps, NASA photos, YouTube, Wikipedia, timers, and more — all rendered as living widgets inside an animated colony environment.
 
 > Built with [Cursor](https://cursor.com) + [ElevenLabs](https://elevenlabs.io) for **#ElevenHacks**. Fully hands-free: speech in (Web Speech API), speech out (ElevenLabs TTS) — never touch the keyboard.
 
