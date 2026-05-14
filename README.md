@@ -4,6 +4,8 @@ A voice-controlled AI operating system. One voice command summons weather, music
 
 > Built with [Cursor](https://cursor.com) + [ElevenLabs](https://elevenlabs.io) for **#ElevenHacks**. Fully hands-free: speech in (Web Speech API), speech out (ElevenLabs TTS) — never touch the keyboard.
 
+**Live demo:** [voice-companion-rust.vercel.app](https://voice-companion-rust.vercel.app) — open in Chrome.
+
 ---
 
 ## Stack
