@@ -2,6 +2,8 @@
 
 # 🌌 Super Nova
 
+> **Write-up:** [Wiring a Voice-Only Companion to MCP, Groq and ElevenLabs](https://anirudhvasudevan.com/blog/super-nova-voice-companion/), the architecture, decisions and lessons. Built by [Anirudh Vasudevan](https://anirudhvasudevan.com/).
+
 ### Your AI Companion — controlled entirely by voice.
 
 *No keyboard. No clicks. Just talk.*
